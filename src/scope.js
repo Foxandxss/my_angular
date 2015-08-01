@@ -1,6 +1,8 @@
 /* jshint globalstrict: true */
 'use strict';
 
+function initWatchVal() { }
+
 function Scope() {
   this.$$watchers = [];
 }
@@ -13,7 +15,9 @@ Scope.prototype.$digest = function() {
     oldValue = watcher.last;
     if (newValue !== oldValue) {
       watcher.last = newValue;
-      watcher.listenerFn(newValue, oldValue, self);
+      watcher.listenerFn(newValue,
+        (oldValue === initWatchVal ? newValue : oldValue),
+        self);
     }
   });
 };
@@ -21,7 +25,8 @@ Scope.prototype.$digest = function() {
 Scope.prototype.$watch = function(watchFn, listenerFn) {
   var watcher = {
     watchFn: watchFn,
-    listenerFn: listenerFn
+    listenerFn: listenerFn,
+    last: initWatchVal
   };
   this.$$watchers.push(watcher);
 };
