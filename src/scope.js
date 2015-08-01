@@ -6,8 +6,15 @@ function Scope() {
 }
 
 Scope.prototype.$digest = function() {
+  var self = this;
+  var newValue, oldValue;
   _.forEach(this.$$watchers, function(watcher) {
-    watcher.listenerFn();
+    newValue = watcher.watchFn(self);
+    oldValue = watcher.last;
+    if (newValue !== oldValue) {
+      watcher.last = newValue;
+      watcher.listenerFn(newValue, oldValue, self);
+    }
   });
 };
 
