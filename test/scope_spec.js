@@ -1,6 +1,6 @@
 /* jshint globalstrict: true */
 /* global publishExternalAPI: false, createInjector: false */
-/* global scope: false */
+/* global Scope: false */
 'use strict';
 
 describe("Scope", function() {
