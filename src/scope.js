@@ -50,6 +50,10 @@ Scope.prototype.$$digestOnce = function() {
   return dirty;
 };
 
+Scope.prototype.$eval = function(expr, locals) {
+  return expr(this, locals);
+};
+
 Scope.prototype.$watch = function(watchFn, listenerFn, valueEq) {
   var watcher = {
     watchFn: watchFn,
