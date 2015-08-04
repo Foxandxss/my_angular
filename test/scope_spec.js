@@ -484,7 +484,7 @@ describe("Scope", function() {
       }, 50);
     });
 
-    it("Runs a $$postDigest function after each digest", function() {
+    it("runs a $$postDigest function after each digest", function() {
       scope.counter = 0;
       scope.$$postDigest(function() {
         scope.counter++;
