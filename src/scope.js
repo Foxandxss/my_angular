@@ -70,6 +70,18 @@ Scope.prototype.$evalAsync = function(expr) {
   this.$$asyncQueue.push({scope: this, expression: expr});
 };
 
+Scope.prototype.$destroy = function() {
+  if (this === this.$root) {
+    return;
+  }
+
+  var siblings = this.$parent.$$children;
+  var indexOfThis = siblings.indexOf(this);
+  if (indexOfThis >= 0) {
+    siblings.splice(indexOfThis, 1);
+  }
+};
+
 Scope.prototype.$digest = function() {
   var ttl = 10;
   var dirty;
@@ -181,6 +193,7 @@ Scope.prototype.$new = function(isolated, parent) {
   parent.$$children.push(child);
   child.$$watchers = [];
   child.$$children = [];
+  child.$parent = parent;
   return child;
 };
 
