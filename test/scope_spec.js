@@ -1018,8 +1018,9 @@ describe("Scope", function() {
     var parent;
 
     beforeEach(function() {
-      publishExternalAPI();
-      parent = createInjector(['ng']).get('$rootScope');
+      //publishExternalAPI();
+      //parent = createInjector(['ng']).get('$rootScope');
+      parent = new Scope();
     });
 
     it("inherits the parent's properties", function() {
