@@ -1810,8 +1810,9 @@ describe("Scope", function() {
     var isolatedChild;
 
     beforeEach(function() {
-      publishExternalAPI();
-      parent = createInjector(['ng']).get('$rootScope');
+      //publishExternalAPI();
+      //parent = createInjector(['ng']).get('$rootScope');
+      parent = new Scope();
       scope = parent.$new();
       child = scope.$new();
       isolatedChild = scope.$new(true);
