@@ -56,7 +56,8 @@ Scope.prototype.$beginPhase = function(phase) {
 };
 
 Scope.prototype.$broadcast = function(eventName) {
-  this.$$fireEventOnScope(eventName);
+  var additionalArgs = _.rest(arguments);
+  this.$$fireEventOnScope(eventName, additionalArgs);
 };
 
 Scope.prototype.$clearPhase = function() {
@@ -157,7 +158,8 @@ Scope.prototype.$$digestOnce = function() {
 };
 
 Scope.prototype.$emit = function(eventName) {
-  this.$$fireEventOnScope(eventName);
+  var additionalArgs = _.rest(arguments);
+  this.$$fireEventOnScope(eventName, additionalArgs);
 };
 
 Scope.prototype.$eval = function(expr, locals) {
@@ -174,11 +176,12 @@ Scope.prototype.$$everyScope = function(fn) {
   }
 };
 
-Scope.prototype.$$fireEventOnScope = function(eventName) {
+Scope.prototype.$$fireEventOnScope = function(eventName, additionalArgs) {
   var event = {name: eventName};
+  var listenerArgs = [event].concat(additionalArgs);
   var listeners = this.$$listeners[eventName] || [];
   _.forEach(listeners, function(listener) {
-    listener(event);
+    listener.apply(null, listenerArgs);
   });
 };
 
