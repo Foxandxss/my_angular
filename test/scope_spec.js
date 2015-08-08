@@ -1789,17 +1789,17 @@ describe("Scope", function() {
       expect(oldValueGiven).toEqual({a: 1, b: 2});
     });
 
-    it('accepts expressions for watch functions', function() {
-      var theValue;
-
-      scope.aColl = [1, 2, 3];
-      scope.$watchCollection('aColl', function(newValue, oldValue, scope) {
-        theValue = newValue;
-      });
-      scope.$digest();
-
-      expect(theValue).toEqual([1, 2, 3]);
-    });
+    //it('accepts expressions for watch functions', function() {
+    //  var theValue;
+    //
+    //  scope.aColl = [1, 2, 3];
+    //  scope.$watchCollection('aColl', function(newValue, oldValue, scope) {
+    //    theValue = newValue;
+    //  });
+    //  scope.$digest();
+    //
+    //  expect(theValue).toEqual([1, 2, 3]);
+    //});
 
   });
 
