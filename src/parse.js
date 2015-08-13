@@ -163,6 +163,7 @@ AST.Literal = 'Literal';
 AST.ObjectExpression = 'ObjectExpression';
 AST.Program = 'Program';
 AST.Property = 'Property';
+AST.ThisExpression = 'ThisExpression';
 
 AST.prototype.arrayDeclaration = function() {
   var elements = [];
@@ -190,7 +191,8 @@ AST.prototype.constant = function() {
 AST.prototype.constants = {
   'null': {type: AST.Literal, value: null},
   'true': {type: AST.Literal, value: true},
-  'false': {type: AST.Literal, value: false}
+  'false': {type: AST.Literal, value: false},
+  'this': {type: AST.ThisExpression}
 };
 
 AST.prototype.consume = function(e) {
@@ -308,16 +310,17 @@ ASTCompiler.prototype.nonComputedMember = function(left, right) {
 
 ASTCompiler.prototype.recurse = function(ast) {
   switch (ast.type) {
-    case AST.Program:
-      this.state.body.push('return ', this.recurse(ast.body), ';');
-      break;
-    case AST.Literal:
-      return this.escape(ast.value);
     case AST.ArrayExpression:
       var elements = _.map(ast.elements, function(element) {
         return this.recurse(element);
       }, this);
       return '[' + elements.join(',') + ']';
+    case AST.Identifier:
+      var intoId = this.nextId();
+      this.if_('s', this.assign(intoId, this.nonComputedMember('s', ast.name)));
+      return intoId;
+    case AST.Literal:
+      return this.escape(ast.value);
     case AST.ObjectExpression:
       var properties = _.map(ast.properties, function(property) {
         var key = property.key.type === AST.Identifier ?
@@ -327,10 +330,11 @@ ASTCompiler.prototype.recurse = function(ast) {
         return key + ':' + value;
       }, this);
       return '{' + properties.join(',') + '}';
-    case AST.Identifier:
-      var intoId = this.nextId();
-      this.if_('s', this.assign(intoId, this.nonComputedMember('s', ast.name)));
-      return intoId;
+    case AST.Program:
+      this.state.body.push('return ', this.recurse(ast.body), ';');
+      break;
+    case AST.ThisExpression:
+      return 's';
   }
 };
 
