@@ -284,7 +284,7 @@ ASTCompiler.prototype.compile = function(text) {
   this.recurse(ast);
 
   /* jshint -W054 */
-  return new Function('s',
+  return new Function('s', 'l',
     (this.state.vars.length ?
       'var ' + this.state.vars.join(',') + ';' :
       ''
@@ -304,6 +304,10 @@ ASTCompiler.prototype.escape = function(value) {
   }
 };
 
+ASTCompiler.prototype.getHasOwnProperty = function(object, property) {
+  return object + '&&(' + this.escape(property) + ' in ' + object + ')';
+};
+
 ASTCompiler.prototype.if_ = function(test, consequent) {
   this.state.body.push('if(', test, '){', consequent, '}');
 };
@@ -318,6 +322,10 @@ ASTCompiler.prototype.nonComputedMember = function(left, right) {
   return '(' + left + ').' + right;
 };
 
+ASTCompiler.prototype.not = function(e) {
+  return '!(' + e + ')';
+};
+
 ASTCompiler.prototype.recurse = function(ast) {
   var intoId;
   switch (ast.type) {
@@ -328,7 +336,8 @@ ASTCompiler.prototype.recurse = function(ast) {
       return '[' + elements.join(',') + ']';
     case AST.Identifier:
       intoId = this.nextId();
-      this.if_('s', this.assign(intoId, this.nonComputedMember('s', ast.name)));
+      this.if_(this.getHasOwnProperty('l', ast.name), this.assign(intoId, this.nonComputedMember('l', ast.name)));
+      this.if_(this.not(this.getHasOwnProperty('l', ast.name)) + ' && s', this.assign(intoId, this.nonComputedMember('s', ast.name)));
       return intoId;
     case AST.Literal:
       return this.escape(ast.value);
