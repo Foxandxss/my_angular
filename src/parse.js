@@ -49,7 +49,7 @@ Lexer.prototype.lex = function(text) {
       this.readNumber();
     } else if (this.is('\'"')) {
       this.readString(this.ch);
-    } else if (this.is('[],{}:.')) {
+    } else if (this.is('[],{}:.()')) {
       this.tokens.push({
         text: this.ch
       });
@@ -158,6 +158,7 @@ function AST(lexer) {
 }
 
 AST.ArrayExpression = 'ArrayExpression';
+AST.CallExpression = 'CallExpression';
 AST.Identifier = 'Identifier';
 AST.Literal = 'Literal';
 AST.MemberExpression = 'MemberExpression';
@@ -234,6 +235,16 @@ AST.prototype.object = function() {
   return {type: AST.ObjectExpression, properties: properties};
 };
 
+AST.prototype.parseArguments = function() {
+  var args = [];
+  if (!this.peek(')')) {
+    do {
+      args.push(this.primary());
+    } while (this.expect(','));
+  }
+  return args;
+}
+
 AST.prototype.peek = function(e1, e2, e3, e4) {
   if (this.tokens.length > 0) {
     var text = this.tokens[0].text;
@@ -259,7 +270,7 @@ AST.prototype.primary = function() {
   }
   var next;
 
-  while ((next = this.expect('.', '['))) {
+  while ((next = this.expect('.', '[', '('))) {
     if (next.text === '[') {
       primary = {
         type: AST.MemberExpression,
@@ -268,13 +279,20 @@ AST.prototype.primary = function() {
         computed: true
       };
       this.consume(']');
-    } else {
+    } else if (next.text === '.') {
       primary = {
         type: AST.MemberExpression,
         object: primary,
         property: this.identifier(),
         computed: false
       };
+    } else if (next.text === '(') {
+      primary = {
+        type: AST.CallExpression,
+        callee: primary,
+        arguments: this.parseArguments()
+      };
+      this.consume(')');
     }
   }
   return primary;
@@ -352,6 +370,10 @@ ASTCompiler.prototype.recurse = function(ast) {
         return this.recurse(element);
       }, this);
       return '[' + elements.join(',') + ']';
+    case AST.CallExpression:
+      var callee = this.recurse(ast.callee);
+      var args = _.map(ast.arguments, _.bind(this.recurse, this));
+      return callee + '&&' + callee + '(' + args.join(',') + ')';
     case AST.Identifier:
       intoId = this.nextId();
       this.if_(this.getHasOwnProperty('l', ast.name), this.assign(intoId, this.nonComputedMember('l', ast.name)));
