@@ -90,16 +90,15 @@ Scope.prototype.$evalAsync = function(expr) {
 };
 
 Scope.prototype.$destroy = function() {
-  if (this === this.$root) {
-    return;
+  this.$broadcast('$destroy');
+  if (this.$parent) {
+    var siblings = this.$parent.$$children;
+    var indexOfThis = siblings.indexOf(this);
+    if (indexOfThis >= 0) {
+      siblings.splice(indexOfThis, 1);
+    }
   }
-
-  var siblings = this.$parent.$$children;
-  var indexOfThis = siblings.indexOf(this);
-  if (indexOfThis >= 0) {
-    this.$broadcast('$destroy');
-    siblings.splice(indexOfThis, 1);
-  }
+  this.$$watchers = null;
 };
 
 Scope.prototype.$digest = function() {
