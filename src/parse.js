@@ -419,7 +419,10 @@ AST.prototype.peek = function(e1, e2, e3, e4) {
 
 AST.prototype.primary = function() {
   var primary;
-  if (this.expect('[')) {
+  if (this.expect('(')) {
+    primary = this.assignment();
+    this.consume(')');
+  } else if (this.expect('[')) {
     primary = this.arrayDeclaration();
   } else if (this.expect('{')) {
     primary = this.object();
