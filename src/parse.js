@@ -239,6 +239,7 @@ AST.ArrayExpression = 'ArrayExpression';
 AST.AssignmentExpression = 'AssignmentExpression';
 AST.BinaryExpression = 'BinaryExpression';
 AST.CallExpression = 'CallExpression';
+AST.ConditionalExpression = 'ConditionalExpression';
 AST.Identifier = 'Identifier';
 AST.Literal = 'Literal';
 AST.LogicalExpression = 'LogicalExpression';
@@ -278,9 +279,9 @@ AST.prototype.arrayDeclaration = function() {
 };
 
 AST.prototype.assignment = function() {
-  var left = this.logicalOR();
+  var left = this.ternary();
   if (this.expect('=')) {
-    var right = this.logicalOR();
+    var right = this.ternary();
     return {type: AST.AssignmentExpression, left: left, right: right};
   }
   return left;
@@ -477,6 +478,23 @@ AST.prototype.relational = function() {
   return left;
 };
 
+AST.prototype.ternary = function() {
+  var test = this.logicalOR();
+  if (this.expect('?')) {
+    var consequent = this.assignment();
+    if (this.consume(':')) {
+      var alternate = this.assignment();
+      return {
+        type: AST.ConditionalExpression,
+        test: test,
+        consequent: consequent,
+        alternate: alternate
+      };
+    }
+  }
+  return test;
+};
+
 AST.prototype.unary = function() {
   var token;
   if ((token = this.expect('+', '!', '-'))) {
@@ -620,6 +638,13 @@ ASTCompiler.prototype.recurse = function(ast, context, create) {
       }
       this.addEnsureSafeFunction(callee);
       return callee + '&&ensureSafeObject(' + callee + '(' + args.join(',') + '))';
+    case AST.ConditionalExpression:
+      intoId = this.nextId();
+      var testId = this.nextId();
+      this.state.body.push(this.assign(testId, this.recurse(ast.test)));
+      this.if_(testId, this.assign(intoId, this.recurse(ast.consequent)));
+      this.if_(this.not(testId), this.assign(intoId, this.recurse(ast.alternate)));
+      return intoId;
     case AST.Identifier:
       ensureSafeMemberName(ast.name);
       intoId = this.nextId();
