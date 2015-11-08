@@ -230,6 +230,20 @@ AST.Property = 'Property';
 AST.ThisExpression = 'ThisExpression';
 AST.UnaryExpression = 'UnaryExpression';
 
+AST.prototype.additive = function() {
+  var left = this.multiplicative();
+  var token;
+  while ((token = this.expect('+')) || (token = this.expect('-'))) {
+    left = {
+      type: AST.BinaryExpression,
+      left: left,
+      operator: token.text,
+      right: this.multiplicative()
+    };
+  }
+  return left;
+};
+
 AST.prototype.arrayDeclaration = function() {
   var elements = [];
   if (!this.peek(']')) {
@@ -245,9 +259,9 @@ AST.prototype.arrayDeclaration = function() {
 };
 
 AST.prototype.assignment = function() {
-  var left = this.multiplicative();
+  var left = this.additive();
   if (this.expect('=')) {
-    var right = this.multiplicative();
+    var right = this.additive();
     return {type: AST.AssignmentExpression, left: left, right: right};
   }
   return left;
@@ -509,7 +523,12 @@ ASTCompiler.prototype.recurse = function(ast, context, create) {
       }
       return this.assign(leftExpr, 'ensureSafeObject(' + this.recurse(ast.right) + ')');
     case AST.BinaryExpression:
-      return '(' + this.recurse(ast.left) + ')' + ast.operator + '(' + this.recurse(ast.right) + ')';
+      if (ast.operator === '+' || ast.operator === '-') {
+        return '(' + this.ifDefined(this.recurse(ast.left), 0) + ')' + ast.operator + '(' + this.ifDefined(this.recurse(ast.right), 0) + ')';
+      } else {
+        return '(' + this.recurse(ast.left) + ')' + ast.operator + '(' + this.recurse(ast.right) + ')';
+      }
+      break;
     case AST.CallExpression:
       var callContext = {};
       var callee = this.recurse(ast.callee, callContext);
