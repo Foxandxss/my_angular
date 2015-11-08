@@ -11,7 +11,10 @@ var BIND = Function.prototype.bind;
 var OPERATORS = {
   '+': true,
   '!': true,
-  '-': true
+  '-': true,
+  '*': true,
+  '/': true,
+  '%': true
 };
 
 function ensureSafeFunction(obj) {
@@ -216,6 +219,7 @@ function AST(lexer) {
 
 AST.ArrayExpression = 'ArrayExpression';
 AST.AssignmentExpression = 'AssignmentExpression';
+AST.BinaryExpression = 'BinaryExpression';
 AST.CallExpression = 'CallExpression';
 AST.Identifier = 'Identifier';
 AST.Literal = 'Literal';
@@ -241,9 +245,9 @@ AST.prototype.arrayDeclaration = function() {
 };
 
 AST.prototype.assignment = function() {
-  var left = this.unary();
+  var left = this.multiplicative();
   if (this.expect('=')) {
-    var right = this.unary();
+    var right = this.multiplicative();
     return {type: AST.AssignmentExpression, left: left, right: right};
   }
   return left;
@@ -282,6 +286,20 @@ AST.prototype.expect = function(e1, e2, e3, e4) {
 
 AST.prototype.identifier = function() {
   return {type: AST.Identifier, name: this.consume().text};
+};
+
+AST.prototype.multiplicative = function() {
+  var left = this.unary();
+  var token;
+  while ((token = this.expect('*', '/', '%'))) {
+    left = {
+      type: AST.BinaryExpression,
+      left: left,
+      operator: token.text,
+      right: this.unary()
+    };
+  }
+  return left;
 };
 
 AST.prototype.object = function() {
@@ -490,6 +508,8 @@ ASTCompiler.prototype.recurse = function(ast, context, create) {
         leftExpr = this.nonComputedMember(leftContext.context, leftContext.name);
       }
       return this.assign(leftExpr, 'ensureSafeObject(' + this.recurse(ast.right) + ')');
+    case AST.BinaryExpression:
+      return '(' + this.recurse(ast.left) + ')' + ast.operator + '(' + this.recurse(ast.right) + ')';
     case AST.CallExpression:
       var callContext = {};
       var callee = this.recurse(ast.callee, callContext);
