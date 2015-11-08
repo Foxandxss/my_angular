@@ -23,7 +23,9 @@ var OPERATORS = {
   '<': true,
   '>': true,
   '<=': true,
-  '>=': true
+  '>=': true,
+  '&&': true,
+  '||': true
 };
 
 function ensureSafeFunction(obj) {
@@ -111,7 +113,7 @@ Lexer.prototype.lex = function(text) {
       this.readNumber();
     } else if (this.is('\'"')) {
       this.readString(this.ch);
-    } else if (this.is('[],{}:.()')) {
+    } else if (this.is('[],{}:.()?')) {
       this.tokens.push({
         text: this.ch
       });
@@ -239,6 +241,7 @@ AST.BinaryExpression = 'BinaryExpression';
 AST.CallExpression = 'CallExpression';
 AST.Identifier = 'Identifier';
 AST.Literal = 'Literal';
+AST.LogicalExpression = 'LogicalExpression';
 AST.MemberExpression = 'MemberExpression';
 AST.ObjectExpression = 'ObjectExpression';
 AST.Program = 'Program';
@@ -275,9 +278,9 @@ AST.prototype.arrayDeclaration = function() {
 };
 
 AST.prototype.assignment = function() {
-  var left = this.equality();
+  var left = this.logicalOR();
   if (this.expect('=')) {
-    var right = this.equality();
+    var right = this.logicalOR();
     return {type: AST.AssignmentExpression, left: left, right: right};
   }
   return left;
@@ -330,6 +333,34 @@ AST.prototype.expect = function(e1, e2, e3, e4) {
 
 AST.prototype.identifier = function() {
   return {type: AST.Identifier, name: this.consume().text};
+};
+
+AST.prototype.logicalAND = function() {
+  var left = this.equality();
+  var token;
+  while ((token = this.expect('&&'))) {
+    left = {
+      type: AST.LogicalExpression,
+      left: left,
+      operator: token.text,
+      right: this.equality()
+    };
+  }
+  return left;
+};
+
+AST.prototype.logicalOR = function() {
+  var left = this.logicalAND();
+  var token;
+  while ((token = this.expect('||'))) {
+    left = {
+      type: AST.LogicalExpression,
+      left: left,
+      operator: token.text,
+      right: this.logicalAND()
+    };
+  }
+  return left;
 };
 
 AST.prototype.multiplicative = function() {
@@ -609,6 +640,11 @@ ASTCompiler.prototype.recurse = function(ast, context, create) {
       return intoId;
     case AST.Literal:
       return this.escape(ast.value);
+    case AST.LogicalExpression:
+      intoId = this.nextId();
+      this.state.body.push(this.assign(intoId, this.recurse(ast.left)));
+      this.if_(ast.operator === '&&' ? intoId : this.not(intoId), this.assign(intoId, this.recurse(ast.right)));
+      return intoId;
     case AST.MemberExpression:
       intoId = this.nextId();
       var left = this.recurse(ast.object, undefined, create);
