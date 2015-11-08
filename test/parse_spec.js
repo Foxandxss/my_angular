@@ -1,7 +1,9 @@
-/* jshint globalstrict: true */
-/* global publishExternalAPI: false, createInjector: false */
-/* global parse: false */
 'use strict';
+
+var _ = require('lodash');
+var parse = require('../src/parse');
+//var publishExternalAPI = require('../src/angular_public');
+//var createInjector = require('../src/injector');
 
 describe("parse", function() {
 

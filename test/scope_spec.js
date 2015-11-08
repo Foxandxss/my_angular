@@ -1,7 +1,9 @@
-/* jshint globalstrict: true */
-/* global publishExternalAPI: false, createInjector: false */
-/* global Scope: false */
 'use strict';
+
+var _ = require('lodash');
+var Scope = require('../src/scope');
+//var publishExternalAPI = require('../src/angular_public');
+//var createInjector = require('../src/injector');
 
 describe("Scope", function() {
 

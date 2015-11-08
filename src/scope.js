@@ -1,7 +1,16 @@
-/* jshint globalstrict: true */
 'use strict';
 
+var _ = require('lodash');
+
 function initWatchVal() { }
+
+function isArrayLike(obj) {
+  if (_.isNull(obj) || _.isUndefined(obj)) {
+    return false;
+  }
+  var length = obj.length;
+  return _.isNumber(length);
+}
 
 function Scope() {
   this.$$watchers = [];
@@ -292,7 +301,7 @@ Scope.prototype.$watch = function(watchFn, listenerFn, valueEq) {
       self.$$watchers.splice(index, 1);
       self.$root.$$lastDirtyWatch = null;
     }
-  }
+  };
 };
 
 Scope.prototype.$watchCollection = function(watchFn, listenerFn) {
@@ -310,7 +319,7 @@ Scope.prototype.$watchCollection = function(watchFn, listenerFn) {
     newValue = watchFn(scope);
 
     if (_.isObject(newValue)) {
-      if (_.isArrayLike(newValue)) {
+      if (isArrayLike(newValue)) {
         if (!_.isArray(oldValue)) {
           changeCount++;
           oldValue = [];
@@ -327,7 +336,7 @@ Scope.prototype.$watchCollection = function(watchFn, listenerFn) {
           }
         });
       } else {
-        if (!_.isObject(oldValue) || _.isArrayLike(oldValue)) {
+        if (!_.isObject(oldValue) || isArrayLike(oldValue)) {
           changeCount++;
           oldValue = {};
           oldLength = 0;
@@ -400,7 +409,7 @@ Scope.prototype.$watchGroup = function(watchFns, listenerFn) {
     });
     return function() {
       shouldCall = false;
-    }
+    };
   }
 
   function watchGroupListener() {
@@ -428,5 +437,7 @@ Scope.prototype.$watchGroup = function(watchFns, listenerFn) {
     _.forEach(destroyFunctions, function(destroyFunction) {
       destroyFunction();
     });
-  }
+  };
 };
+
+module.exports = Scope;
