@@ -8,6 +8,11 @@ var ESCAPES = {'n':'\n', 'f':'\f', 'r':'\r', 't':'\t',
 var CALL = Function.prototype.call;
 var APPLY = Function.prototype.apply;
 var BIND = Function.prototype.bind;
+var OPERATORS = {
+  '+': true,
+  '!': true,
+  '-': true
+};
 
 function ensureSafeFunction(obj) {
   if (obj) {
@@ -42,6 +47,10 @@ function ensureSafeObject(obj) {
     }
   }
   return obj;
+}
+
+function ifDefined(value, defaultValue) {
+  return typeof value === 'undefined' ? defaultValue : value;
 }
 
 function Lexer() {
@@ -99,7 +108,13 @@ Lexer.prototype.lex = function(text) {
     } else if (this.isWhitespace(this.ch)) {
       this.index++;
     } else {
-      throw 'Unexpected next character: ' + this.ch;
+      var op = OPERATORS[this.ch];
+      if (op) {
+        this.tokens.push({text: this.ch});
+        this.index++;
+      } else {
+        throw 'Unexpected next character: ' + this.ch;
+      }
     }
   }
 
@@ -156,9 +171,11 @@ Lexer.prototype.readNumber = function() {
 Lexer.prototype.readString = function(quote) {
   this.index++;
   var string = '';
+  var rawString = quote;
   var escape = false;
   while (this.index < this.text.length) {
     var ch = this.text.charAt(this.index);
+    rawString += ch;
     if (escape) {
       if (ch === 'u') {
         var hex = this.text.substring(this.index + 1, this.index + 5);
@@ -179,7 +196,7 @@ Lexer.prototype.readString = function(quote) {
     } else if (ch === quote) {
       this.index++;
       this.tokens.push({
-        text: string,
+        text: rawString,
         value: string
       });
       return;
@@ -207,6 +224,7 @@ AST.ObjectExpression = 'ObjectExpression';
 AST.Program = 'Program';
 AST.Property = 'Property';
 AST.ThisExpression = 'ThisExpression';
+AST.UnaryExpression = 'UnaryExpression';
 
 AST.prototype.arrayDeclaration = function() {
   var elements = [];
@@ -223,9 +241,9 @@ AST.prototype.arrayDeclaration = function() {
 };
 
 AST.prototype.assignment = function() {
-  var left = this.primary();
+  var left = this.unary();
   if (this.expect('=')) {
-    var right = this.primary();
+    var right = this.unary();
     return {type: AST.AssignmentExpression, left: left, right: right};
   }
   return left;
@@ -352,6 +370,19 @@ AST.prototype.program = function() {
   return {type: AST.Program, body: this.assignment()};
 };
 
+AST.prototype.unary = function() {
+  var token;
+  if ((token = this.expect('+', '!', '-'))) {
+    return {
+      type: AST.UnaryExpression,
+      operator: token.text,
+      argument: this.unary()
+    };
+  } else {
+    return this.primary();
+  }
+};
+
 function ASTCompiler(astBuilder) {
   this.astBuilder = astBuilder;
 }
@@ -390,10 +421,12 @@ ASTCompiler.prototype.compile = function(text) {
     'ensureSafeMemberName',
     'ensureSafeObject',
     'ensureSafeFunction',
+    'ifDefined',
     fnString)(
     ensureSafeMemberName,
     ensureSafeObject,
-    ensureSafeFunction);
+    ensureSafeFunction,
+    ifDefined);
   /* jshint +W054 */
 };
 
@@ -419,6 +452,10 @@ ASTCompiler.prototype.getHasOwnProperty = function(object, property) {
 
 ASTCompiler.prototype.if_ = function(test, consequent) {
   this.state.body.push('if(', test, '){', consequent, '}');
+};
+
+ASTCompiler.prototype.ifDefined = function(value, defaultValue) {
+  return 'ifDefined(' + value + ',' + this.escape(defaultValue) + ')';
 };
 
 ASTCompiler.prototype.nextId = function() {
@@ -534,6 +571,8 @@ ASTCompiler.prototype.recurse = function(ast, context, create) {
       break;
     case AST.ThisExpression:
       return 's';
+    case AST.UnaryExpression:
+      return ast.operator + '(' + this.ifDefined(this.recurse(ast.argument), 0) + ')';
   }
 };
 
