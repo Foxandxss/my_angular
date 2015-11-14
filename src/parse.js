@@ -49,14 +49,14 @@ function ensureSafeMemberName(name) {
 
 function ensureSafeObject(obj) {
   if (obj) {
-    if (obj.document && obj.location && obj.alert && obj.setInterval) {
+    if (obj.window === window) {
       throw 'Referencing window in Angular expressions is disallowed!';
     } else if (obj.children &&
-                (obj.nodeName || (obj.prop && obj.attr && obj.find))) {
+      (obj.nodeName || (obj.prop && obj.attr && obj.find))) {
       throw 'Referencing DOM nodes in Angular expressions is disallowed!';
     } else if (obj.constructor === obj) {
       throw 'Referencing Function in Angular expressions is disallowed!';
-    } else if (obj.getOwnPropertyNames || obj.getOwnPropertyDescriptor) {
+    } else if (obj === Object) {
       throw 'Referencing Object in Angular expressions is disallowed!';
     }
   }
