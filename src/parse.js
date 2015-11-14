@@ -95,7 +95,7 @@ Lexer.prototype.isWhitespace = function(ch) {
 
 Lexer.prototype.peek = function(n) {
   n = n || 1;
-  return this.index + n < this.text.length - 1 ?
+  return this.index + n < this.text.length ?
     this.text.charAt(this.index + n) :
     false;
 };
