@@ -8,7 +8,7 @@ var filter = require('../src/filter').filter;
 
 describe("filter filter", function() {
 
-  var parse;
+  // var parse;
 
   // beforeEach(function() {
   //   publishExternalAPI();
