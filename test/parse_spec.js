@@ -635,7 +635,7 @@ describe("parse", function() {
     expect(parse('a = 1; b = 2; a + b')({})).toBe(3);
   });
 
-  fit('can parse filter expressions', function() {
+  it('can parse filter expressions', function() {
     register('upcase', function() {
       return function(str) {
         return str.toUpperCase();
@@ -643,6 +643,21 @@ describe("parse", function() {
     });
     var fn = parse('aString | upcase');
     expect(fn({aString: 'Hello'})).toEqual('HELLO');
+  });
+
+  it('can parse filter chain expressions', function() {
+    register('upcase', function() {
+      return function(str) {
+        return str.toUpperCase();
+      };
+    });
+    register('exclamate', function() {
+      return function(s) {
+        return s + '!';
+      };
+    });
+    var fn = parse('"hello" | upcase | exclamate');
+    expect(fn()).toEqual('HELLO!');
   });
 
   //it('can parse filter expressions', function() {
