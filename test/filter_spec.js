@@ -20,7 +20,7 @@ describe("filter", function() {
     expect(filter('my')).toBe(myFilter);
   });
 
-  fit('allows registering multiple filters with an object', function() {
+  it('allows registering multiple filters with an object', function() {
     var myFilter = function() { };
     var myOtherFilter = function() { };
     // var injector = createInjector(['ng', function($filterProvider) {
