@@ -21,6 +21,7 @@ function filterFilter() {
 }
 
 function createPredicateFn(expression) {
+  var shouldMatchPrimitives = _.isObject(expression) && ('$' in expression);
 
   function comparator(actual, expected) {
     if (_.isUndefined(actual)) {
@@ -35,11 +36,14 @@ function createPredicateFn(expression) {
   }
 
   return function predicateFn(item) {
+    if (shouldMatchPrimitives && !_.isObject(item)) {
+      return deepCompare(item, expression.$, comparator);
+    }
     return deepCompare(item, expression, comparator, true);
   };
 }
 
-function deepCompare(actual, expected, comparator, matchAnyProperty) {
+function deepCompare(actual, expected, comparator, matchAnyProperty, inWildcard) {
   if (_.isString(expected) && _.startsWith(expected, '!')) {
     return !deepCompare(actual, expected.substring(1), comparator, matchAnyProperty);
   }
@@ -49,12 +53,14 @@ function deepCompare(actual, expected, comparator, matchAnyProperty) {
     });
   }
   if (_.isObject(actual)) {
-    if (_.isObject(expected)) {
+    if (_.isObject(expected) && !inWildcard) {
       return _.every(_.toPlainObject(expected), function(expectedVal, expectedKey) {
         if (_.isUndefined(expectedVal)) {
           return true;
         }
-        return deepCompare(actual[expectedKey], expectedVal, comparator);
+        var isWildcard = (expectedKey === '$');
+        var actualVal = isWildcard ? actual : actual[expectedKey];
+        return deepCompare(actualVal, expectedVal, comparator, isWildcard, isWildcard);
       });
     } else if (matchAnyProperty) {
       return _.some(actual, function(value) {
