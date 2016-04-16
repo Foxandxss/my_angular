@@ -7,7 +7,8 @@ var FN_ARG = /^\s*(_?)(\S+?)\1\s*$/;
 var STRIP_COMMENTS = /(\/\/.*$)|\/\*.*\*\//g;
 
 function createInjector(modulesToLoad, strictDi) {
-  var cache = {};
+  var providerCache = {};
+  var instanceCache = {};
   var loadedModules = {};
   strictDi = (strictDi === true);
 
@@ -16,10 +17,10 @@ function createInjector(modulesToLoad, strictDi) {
       if (key === 'hasOwnProperty') {
         throw 'hasOwnProperty is not a valid constant name!';
       }
-      cache[key] = value;
+      instanceCache[key] = value;
     },
     provider: function(key, provider) {
-      cache[key] = invoke(provider.$get, provider);
+      providerCache[key + 'Provider'] = provider;
     }
   };
 
@@ -42,6 +43,15 @@ function createInjector(modulesToLoad, strictDi) {
     }
   }
 
+  function getService(name) {
+    if (instanceCache.hasOwnProperty(name)) {
+      return instanceCache[name];
+    } else if (providerCache.hasOwnProperty(name + 'Provider')) {
+      var provider = providerCache[name + 'Provider'];
+      return invoke(provider.$get, provider);
+    }
+  }
+
   function instantiate(Type, locals) {
     var UnwrappedType = _.isArray(Type) ? _.last(Type) : Type;
     var instance = Object.create(UnwrappedType.prototype);
@@ -54,7 +64,7 @@ function createInjector(modulesToLoad, strictDi) {
       if (_.isString(token)) {
         return locals && locals.hasOwnProperty(token) ?
           locals[token] :
-          cache[token];
+          getService(token);
       } else {
         throw 'Incorrect injection token! Expected a string, got '+token;
       }
@@ -80,11 +90,9 @@ function createInjector(modulesToLoad, strictDi) {
 
   return {
     annotate: annotate,
-    get: function(key) {
-      return cache[key];
-    },
+    get: getService,
     has: function(key) {
-      return cache.hasOwnProperty(key);
+      return instanceCache.hasOwnProperty(key) || providerCache.hasOwnProperty(key + 'Provider');
     },
     instantiate: instantiate,
     invoke: invoke
