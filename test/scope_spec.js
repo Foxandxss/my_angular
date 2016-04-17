@@ -1,10 +1,8 @@
 'use strict';
 
 var _ = require('lodash');
-var Scope = require('../src/scope');
-var register = require('../src/filter').register;
-//var publishExternalAPI = require('../src/angular_public');
-//var createInjector = require('../src/injector');
+var publishExternalAPI = require('../src/angular_public');
+var createInjector = require('../src/injector');
 
 describe("Scope", function() {
 
@@ -13,9 +11,8 @@ describe("Scope", function() {
     var scope;
 
     beforeEach(function() {
-      scope = new Scope();
-      //publishExternalAPI();
-      //scope = createInjector(['ng']).get('$rootScope');
+      publishExternalAPI();
+      scope = createInjector(['ng']).get('$rootScope');
     });
 
     it("calls the listener function of a watch on first $digest", function() {
@@ -855,52 +852,29 @@ describe("Scope", function() {
     });
 
     it('allows $stateful filter value to change over time', function(done) {
-      register('withTime', function() {
-        return _.extend(function(v) {
-          return new Date().toISOString() + ': ' + v;
-        }, {
-          $stateful: true
-        });
-      });
+     var injector = createInjector(['ng', function($filterProvider) {
+       $filterProvider.register('withTime', function() {
+         return _.extend(function(v) {
+           return new Date().toISOString() + ': ' + v;
+         }, {
+           $stateful: true
+         });
+       });
+     }]);
+     scope = injector.get('$rootScope');
 
-      var listenerSpy = jasmine.createSpy();
-      scope.$watch('42 | withTime', listenerSpy);
-      scope.$digest();
-      var firstValue = listenerSpy.calls.mostRecent().args[0];
+     var listenerSpy = jasmine.createSpy();
+     scope.$watch('42 | withTime', listenerSpy);
+     scope.$digest();
+     var firstValue = listenerSpy.calls.mostRecent().args[0];
 
-      setTimeout(function() {
-        scope.$digest();
-        var secondValue = listenerSpy.calls.mostRecent().args[0];
-        expect(secondValue).not.toEqual(firstValue);
-        done();
-      }, 100);
+     setTimeout(function() {
+       scope.$digest();
+       var secondValue = listenerSpy.calls.mostRecent().args[0];
+       expect(secondValue).not.toEqual(firstValue);
+       done();
+     }, 100);
     });
-
-    //it('allows $stateful filter value to change over time', function(done) {
-    //  var injector = createInjector(['ng', function($filterProvider) {
-    //    $filterProvider.register('withTime', function() {
-    //      return _.extend(function(v) {
-    //        return new Date().toISOString() + ': ' + v;
-    //      }, {
-    //        $stateful: true
-    //      });
-    //    });
-    //  }]);
-    //  scope = injector.get('$rootScope');
-    //
-    //  var listenerSpy = jasmine.createSpy();
-    //  scope.$watch('42 | withTime', listenerSpy);
-    //  scope.$digest();
-    //  var firstValue = listenerSpy.calls.mostRecent().args[0];
-    //
-    //  setTimeout(function() {
-    //    scope.$digest();
-    //    var secondValue = listenerSpy.calls.mostRecent().args[0];
-    //    expect(secondValue).not.toEqual(firstValue);
-    //    done();
-    //  }, 100);
-    //});
-
 
   });
 
@@ -908,9 +882,8 @@ describe("Scope", function() {
 
     var scope;
     beforeEach(function() {
-      scope = new Scope();
-      //publishExternalAPI();
-      //scope = createInjector(['ng']).get('$rootScope');
+      publishExternalAPI();
+      scope = createInjector(['ng']).get('$rootScope');
     });
 
     it('takes several watches as an array and calls listener with arrays', function() {
@@ -1043,9 +1016,8 @@ describe("Scope", function() {
     var parent;
 
     beforeEach(function() {
-      //publishExternalAPI();
-      //parent = createInjector(['ng']).get('$rootScope');
-      parent = new Scope();
+      publishExternalAPI();
+      parent = createInjector(['ng']).get('$rootScope');
     });
 
     it("inherits the parent's properties", function() {
@@ -1400,9 +1372,8 @@ describe("Scope", function() {
     var scope;
 
     beforeEach(function() {
-      scope = new Scope();
-      //publishExternalAPI();
-      //scope = createInjector(['ng']).get('$rootScope');
+      publishExternalAPI();
+      scope = createInjector(['ng']).get('$rootScope');
     });
 
     it("works like a normal watch for non-collections", function() {
@@ -1835,9 +1806,8 @@ describe("Scope", function() {
     var isolatedChild;
 
     beforeEach(function() {
-      //publishExternalAPI();
-      //parent = createInjector(['ng']).get('$rootScope');
-      parent = new Scope();
+      publishExternalAPI();
+      parent = createInjector(['ng']).get('$rootScope');
       scope = parent.$new();
       child = scope.$new();
       isolatedChild = scope.$new(true);
