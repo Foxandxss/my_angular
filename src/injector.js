@@ -9,11 +9,11 @@ var INSTANTIATING = {};
 
 function createInjector(modulesToLoad, strictDi) {
   var providerCache = {};
-  var providerInjector = createInternalInjector(providerCache, function() {
+  var providerInjector = providerCache.$injector = createInternalInjector(providerCache, function() {
     throw 'Unknown provider: '+path.join(' <- ');
   });
   var instanceCache = {};
-  var instanceInjector = createInternalInjector(instanceCache, function(name) {
+  var instanceInjector = instanceCache.$injector = createInternalInjector(instanceCache, function(name) {
     var provider = providerInjector.get(name + 'Provider');
     return instanceInjector.invoke(provider.$get, provider);
   });
@@ -53,7 +53,7 @@ function createInjector(modulesToLoad, strictDi) {
       var argDeclaration = source.match(FN_ARGS);
       return _.map(argDeclaration[1].split(','), function(argName) {
         return argName.match(FN_ARG)[2];
-      })
+      });
     }
   }
 
