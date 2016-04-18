@@ -12,8 +12,8 @@ describe("$q", function() {
     publishExternalAPI();
     var injector = createInjector(['ng']);
     $q = injector.get('$q');
-    $$q = injector.get('$$q');
-    $rootScope = injector.get('$rootScope');
+    // $$q = injector.get('$$q');
+    // $rootScope = injector.get('$rootScope');
   });
 
   it('can create a deferred', function() {
