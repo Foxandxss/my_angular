@@ -287,6 +287,7 @@ function markConstantAndWatchExpression(ast, $filter) {
       ast.constant = allConstants;
       break;
     case AST.ThisExpression:
+    case AST.LocalsExpression:
       ast.constant = false;
       ast.toWatch = [];
       break;
@@ -474,6 +475,7 @@ AST.CallExpression = 'CallExpression';
 AST.ConditionalExpression = 'ConditionalExpression';
 AST.Identifier = 'Identifier';
 AST.Literal = 'Literal';
+AST.LocalsExpression = 'LocalsExpression';
 AST.LogicalExpression = 'LogicalExpression';
 AST.MemberExpression = 'MemberExpression';
 AST.ObjectExpression = 'ObjectExpression';
@@ -532,7 +534,8 @@ AST.prototype.constants = {
   'null': {type: AST.Literal, value: null},
   'true': {type: AST.Literal, value: true},
   'false': {type: AST.Literal, value: false},
-  'this': {type: AST.ThisExpression}
+  'this': {type: AST.ThisExpression},
+  '$locals': {type: AST.LocalsExpression}
 };
 
 AST.prototype.consume = function(e) {
@@ -1000,6 +1003,8 @@ ASTCompiler.prototype.recurse = function(ast, context, create) {
       return intoId;
     case AST.Literal:
       return this.escape(ast.value);
+    case AST.LocalsExpression:
+      return 'l';
     case AST.LogicalExpression:
       intoId = this.nextId();
       this.state[this.state.computing].body.push(this.assign(intoId, this.recurse(ast.left)));
