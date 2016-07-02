@@ -84,7 +84,7 @@ function $RootScopeProvider() {
           event.defaultPrevented = true;
         }
       };
-      var listenerArgs = [event].concat(_.rest(arguments));
+      var listenerArgs = [event].concat(_.tail(arguments));
       this.$$everyScope(function(scope) {
         event.currentScope = scope;
         scope.$$fireEventOnScope(eventName, listenerArgs);
@@ -204,7 +204,7 @@ function $RootScopeProvider() {
           event.defaultPrevented = true;
         }
       };
-      var listenerArgs = [event].concat(_.rest(arguments));
+      var listenerArgs = [event].concat(_.tail(arguments));
       var scope = this;
       do {
         event.currentScope = scope;

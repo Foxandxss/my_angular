@@ -62,7 +62,7 @@ function inputsWatchDelegate(scope, listenerFn, valueEq, watchFn) {
 
   return scope.$watch(function () {
     var changed = false;
-    _.forEach(inputExpressions, function (inputExpr, i) {
+    _.forEach(inputExpressions, function(inputExpr, i) {
       var newValue = inputExpr(scope);
       if (changed || !expressionInputDirtyCheck(newValue, oldValues[i])) {
         changed = true;
@@ -78,7 +78,7 @@ function inputsWatchDelegate(scope, listenerFn, valueEq, watchFn) {
 
 function oneTimeLiteralWatchDelegate(scope, listenerFn, valueEq, watchFn) {
   function isAllDefined(val) {
-    return !_.any(val, _.isUndefined);
+    return !_.some(val, _.isUndefined);
   }
 
   var unwatch = scope.$watch(
@@ -801,13 +801,13 @@ ASTCompiler.prototype.compile = function(text) {
     inputs: []
   };
   this.stage = 'inputs';
-  _.forEach(getInputs(ast.body), function(input, idx) {
+  _.forEach(getInputs(ast.body), _.bind(function(input, idx) {
     var inputKey = 'fn' + idx;
     this.state[inputKey] = {body: [], vars: []};
     this.state.computing = inputKey;
     this.state[inputKey].body.push('return ' + this.recurse(input) + ';');
     this.state.inputs.push(inputKey);
-  }, this);
+  }, this));
   this.stage = 'assign';
   var assignable = assignableAST(ast);
   if (assignable) {
@@ -880,9 +880,9 @@ ASTCompiler.prototype.filterPrefix = function() {
   if (_.isEmpty(this.state.filters)) {
     return '';
   } else {
-    var parts = _.map(this.state.filters, function(varName, filterName) {
+    var parts = _.map(this.state.filters, _.bind(function(varName, filterName) {
       return varName + '=' + 'filter(' + this.escape(filterName) + ')';
-    }, this);
+    }, this));
 
     return 'var ' + parts.join(',') + ';';
   }
@@ -920,9 +920,9 @@ ASTCompiler.prototype.recurse = function(ast, context, create) {
   var intoId;
   switch (ast.type) {
     case AST.ArrayExpression:
-      var elements = _.map(ast.elements, function(element) {
+      var elements = _.map(ast.elements, _.bind(function(element) {
         return this.recurse(element);
-      }, this);
+      }, this));
       return '[' + elements.join(',') + ']';
     case AST.AssignmentExpression:
       var leftContext = {};
@@ -945,16 +945,16 @@ ASTCompiler.prototype.recurse = function(ast, context, create) {
       var callContext, callee, args;
       if (ast.filter) {
         callee = this.filter(ast.callee.name);
-        args = _.map(ast.arguments, function(arg) {
+        args = _.map(ast.arguments, _.bind(function(arg) {
           return this.recurse(arg);
-        }, this);
+        }, this));
         return callee + '(' + args + ')';
       } else {
         callContext = {};
         callee = this.recurse(ast.callee, callContext);
-        args = _.map(ast.arguments, function(arg) {
+        args = _.map(ast.arguments, _.bind(function(arg) {
           return 'ensureSafeObject(' + this.recurse(arg) + ')';
-        }, this);
+        }, this));
         if (callContext.name) {
           this.addEnsureSafeObject(callContext.context);
           if (callContext.computed) {
@@ -1039,18 +1039,18 @@ ASTCompiler.prototype.recurse = function(ast, context, create) {
     case AST.NGValueParameter:
       return 'v';
     case AST.ObjectExpression:
-      var properties = _.map(ast.properties, function(property) {
+      var properties = _.map(ast.properties, _.bind(function(property) {
         var key = property.key.type === AST.Identifier ?
           property.key.name :
           this.escape(property.key.value);
         var value = this.recurse(property.value);
         return key + ':' + value;
-      }, this);
+      }, this));
       return '{' + properties.join(',') + '}';
     case AST.Program:
-      _.forEach(_.initial(ast.body), function(stmt) {
+      _.forEach(_.initial(ast.body), _.bind(function(stmt) {
         this.state[this.state.computing].body.push(this.recurse(stmt), ';');
-      }, this);
+      }, this));
       this.state[this.state.computing].body.push('return ', this.recurse(_.last(ast.body)), ';');
       break;
     case AST.ThisExpression:
@@ -1068,11 +1068,11 @@ ASTCompiler.prototype.stringEscapeRegex = /[^a-zA-Z0-9]/g;
 
 ASTCompiler.prototype.watchFns = function() {
   var result = [];
-  _.forEach(this.state.inputs, function(inputName) {
+  _.forEach(this.state.inputs, _.bind(function(inputName) {
     result.push('var ', inputName, '=function(s) {',
       (this.state[inputName].vars.length ?
         'var ' + this.state[inputName].vars.join(',') + ';' : ''), this.state[inputName].body.join(''), '};');
-  }, this);
+  }, this));
   if (result.length) {
     result.push('fn.inputs = [', this.state.inputs.join(','), '];');
   }
@@ -1115,7 +1115,7 @@ function $ParseProvider() {
         default:
           return _.noop;
       }
-    }
+    };
   }];
 }
 

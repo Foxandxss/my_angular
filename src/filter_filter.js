@@ -52,7 +52,7 @@ function deepCompare(actual, expected, comparator, matchAnyProperty, inWildcard)
     return !deepCompare(actual, expected.substring(1), comparator, matchAnyProperty);
   }
   if (_.isArray(actual)) {
-    return _.any(actual, function(actualItem) {
+    return _.some(actual, function(actualItem) {
       return deepCompare(actualItem, expected, comparator, matchAnyProperty);
     });
   }
