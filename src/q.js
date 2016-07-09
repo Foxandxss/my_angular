@@ -35,6 +35,14 @@ function $QProvider() {
       return this.then(null, onRejected);
     };
 
+    Promise.prototype.finally = function(callback) {
+      return this.then(function() {
+        callback();
+      }, function() {
+        callback();
+      });
+    }
+
     Promise.prototype.then = function(onFulfilled, onRejected) {
       this.$$state.pending = this.$$state.pending || [];
       this.$$state.pending.push([null, onFulfilled, onRejected]);
