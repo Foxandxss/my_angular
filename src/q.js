@@ -135,9 +135,17 @@ function $QProvider() {
       });
     }
 
+    function when(value, callback, errback, progressback) {
+      var d = defer();
+      d.resolve(value);
+      return d.promise.then(callback, errback, progressback);
+    }
+
     return {
       defer: defer,
-      reject: reject
+      reject: reject,
+      resolve: when,
+      when: when
     };
   }];
 }
