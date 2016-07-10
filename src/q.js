@@ -78,6 +78,15 @@ function $QProvider() {
       return result.promise;
     };
 
+    var $Q = function Q(resolver) {
+      if (!_.isFunction(resolver)) {
+        throw 'Expected function, got ' + resolver;
+      }
+      var d = defer();
+      resolver(_.bind(d.resolve, d), _.bind(d.reject, d));
+      return d.promise;
+    };
+
     function all(promises) {
       var results = _.isArray(promises) ? [] : {};
       var counter = 0;
@@ -163,13 +172,13 @@ function $QProvider() {
       return d.promise.then(callback, errback, progressback);
     }
 
-    return {
+    return _.extend($Q, {
       all: all,
       defer: defer,
       reject: reject,
       resolve: when,
       when: when
-    };
+    });
   }];
 }
 
