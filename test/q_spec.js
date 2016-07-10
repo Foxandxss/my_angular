@@ -12,7 +12,7 @@ describe("$q", function() {
     publishExternalAPI();
     var injector = createInjector(['ng']);
     $q = injector.get('$q');
-    // $$q = injector.get('$$q');
+    $$q = injector.get('$$q');
     $rootScope = injector.get('$rootScope');
   });
 
