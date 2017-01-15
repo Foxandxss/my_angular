@@ -110,6 +110,16 @@ function $HttpProvider() {
 
   var interceptorFactories = this.interceptors = [];
 
+  var useApplyAsync = false;
+  this.useApplyAsync = function(value) {
+    if (_.isUndefined(value)) {
+      return useApplyAsync;
+    } else {
+      useApplyAsync = !!value;
+      return this;
+    }
+  };
+
   this.$get = ['$httpBackend', '$q', '$rootScope', '$injector', function($httpBackend, $q, $rootScope, $injector) {
 
     var interceptors = _.map(interceptorFactories, function(fn) {
@@ -238,15 +248,24 @@ function $HttpProvider() {
 
       function done(status, response, headersString, statusText) {
         status = Math.max(status, 0);
-        deferred[isSuccess(status) ? 'resolve' : 'reject']({
-          status: status,
-          data: response,
-          statusText: statusText,
-          headers: headersGetter(headersString),
-          config: config
-        });
-        if (!$rootScope.$$phase) {
-          $rootScope.$apply();
+
+        function resolvePromise() {
+          deferred[isSuccess(status) ? 'resolve' : 'reject']({
+            status: status,
+            data: response,
+            statusText: statusText,
+            headers: headersGetter(headersString),
+            config: config
+          });
+        }
+        
+        if (useApplyAsync) {
+          $rootScope.$applyAsync(resolvePromise);
+        } else {
+          resolvePromise();
+          if (!$rootScope.$$phase) {
+            $rootScope.$apply();
+          }
         }
       }
 
